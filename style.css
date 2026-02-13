@@ -42,11 +42,11 @@ main {
   display: flex;
   align-items: center;
   gap: 4px;
-  min-width: 150px;
+  min-width: 190px;
 }
 
 .row-label input[type="text"] {
-  width: 60px;
+  width: 54px;
   background: #16213e;
   border: 1px solid #0f3460;
   color: #e0e0e0;
@@ -67,6 +67,13 @@ main {
 
 .row-label button:hover {
   background: #e94560;
+}
+
+.row-label button.row-add-remove {
+  padding: 2px 5px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  line-height: 1;
 }
 
 /* Beat number headers */
@@ -115,7 +122,7 @@ main {
 
 /* Corner spacer (top-left of grid) */
 .corner-spacer {
-  min-width: 150px;
+  min-width: 190px;
 }
 
 /* ---- Controls ---- */

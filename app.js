@@ -3,10 +3,10 @@
 // ---------------------------------------------------------------------------
 
 const DEFAULT_SAMPLES = [
-  { name: "kick", url: "samples/kick.wav" },
-  { name: "snare", url: "samples/snare.wav" },
-  { name: "rim", url: "samples/rim.wav" },
   { name: "hihat", url: "samples/hihat.wav" },
+  { name: "rim", url: "samples/rim.wav" },
+  { name: "snare", url: "samples/snare.wav" },
+  { name: "kick", url: "samples/kick.wav" },
 ];
 
 // ---- State ----------------------------------------------------------------
@@ -85,6 +85,26 @@ function initGrid() {
   state.sampleNames.length = state.numSamples;
 }
 
+// ---- Row Add/Remove -------------------------------------------------------
+
+function addRowAfter(rowIndex) {
+  state.numSamples++;
+  const insertAt = rowIndex + 1;
+  state.grid.splice(insertAt, 0, new Array(state.numBeats).fill(false));
+  state.sampleBuffers.splice(insertAt, 0, null);
+  state.sampleNames.splice(insertAt, 0, "");
+  renderGrid();
+}
+
+function removeRow(rowIndex) {
+  if (state.numSamples <= 1) return;
+  state.numSamples--;
+  state.grid.splice(rowIndex, 1);
+  state.sampleBuffers.splice(rowIndex, 1);
+  state.sampleNames.splice(rowIndex, 1);
+  renderGrid();
+}
+
 // ---- Grid UI --------------------------------------------------------------
 
 const gridContainer = document.getElementById("grid-container");
@@ -93,7 +113,7 @@ function renderGrid() {
   gridContainer.innerHTML = "";
 
   // CSS grid: first column for labels, then one per beat
-  const cols = `150px repeat(${state.numBeats}, 1fr)`;
+  const cols = `190px repeat(${state.numBeats}, 1fr)`;
   gridContainer.style.gridTemplateColumns = cols;
 
   // Header row — corner spacer + beat numbers
@@ -147,10 +167,24 @@ function renderGrid() {
     loadBtn.title = "Load sample";
     loadBtn.addEventListener("click", () => fileInput.click());
 
-    label.appendChild(nameInput);
-    label.appendChild(triggerBtn);
+    const addBtn = document.createElement("button");
+    addBtn.className = "row-add-remove";
+    addBtn.textContent = "+";
+    addBtn.title = "Add row below";
+    addBtn.addEventListener("click", () => addRowAfter(r));
+
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "row-add-remove";
+    removeBtn.textContent = "\u2212";
+    removeBtn.title = "Remove this row";
+    removeBtn.addEventListener("click", () => removeRow(r));
+
+    label.appendChild(addBtn);
+    label.appendChild(removeBtn);
     label.appendChild(loadBtn);
     label.appendChild(fileInput);
+    label.appendChild(nameInput);
+    label.appendChild(triggerBtn);
     gridContainer.appendChild(label);
 
     // Beat cells
@@ -256,22 +290,12 @@ swingSlider.addEventListener("input", () => {
 // ---- Config Inputs --------------------------------------------------------
 
 const inputBeats = document.getElementById("input-beats");
-const inputSamples = document.getElementById("input-samples");
 const inputBpm = document.getElementById("input-bpm");
 
 inputBeats.addEventListener("change", () => {
   const val = parseInt(inputBeats.value, 10);
   if (val >= 1 && val <= 64) {
     state.numBeats = val;
-    initGrid();
-    renderGrid();
-  }
-});
-
-inputSamples.addEventListener("change", () => {
-  const val = parseInt(inputSamples.value, 10);
-  if (val >= 1 && val <= 16) {
-    state.numSamples = val;
     initGrid();
     renderGrid();
   }
