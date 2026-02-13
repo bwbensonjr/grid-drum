@@ -20,6 +20,14 @@ header {
 h1 {
   font-size: 2rem;
   letter-spacing: 0.1em;
+}
+
+.logo-grid {
+  color: transparent;
+  -webkit-text-stroke: 1.5px #e94560;
+}
+
+.logo-drum {
   color: #e94560;
 }
 
