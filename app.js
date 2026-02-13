@@ -1,0 +1,309 @@
+// ---------------------------------------------------------------------------
+// GridDrum — app.js
+// ---------------------------------------------------------------------------
+
+const DEFAULT_SAMPLES = [
+  { name: "kick", url: "samples/kick.wav" },
+  { name: "snare", url: "samples/snare.wav" },
+  { name: "rim", url: "samples/rim.wav" },
+  { name: "hihat", url: "samples/hihat.wav" },
+];
+
+// ---- State ----------------------------------------------------------------
+
+const state = {
+  numBeats: 16,
+  numSamples: 4,
+  bpm: 120,
+  swing: 0,
+  isPlaying: false,
+  currentBeat: 0,
+  grid: [],        // [row][col] booleans
+  sampleBuffers: [],  // AudioBuffer per row (or null)
+  sampleNames: [],    // display name per row
+};
+
+let audioCtx = null;
+let timerId = null;
+
+// ---- Audio Engine ---------------------------------------------------------
+
+function ensureAudioContext() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
+}
+
+async function loadSample(url) {
+  ensureAudioContext();
+  const response = await fetch(url);
+  const arrayBuffer = await response.arrayBuffer();
+  return audioCtx.decodeAudioData(arrayBuffer);
+}
+
+function playSample(rowIndex) {
+  if (!state.sampleBuffers[rowIndex]) return;
+  ensureAudioContext();
+  const source = audioCtx.createBufferSource();
+  source.buffer = state.sampleBuffers[rowIndex];
+  source.connect(audioCtx.destination);
+  source.start(0);
+}
+
+async function loadSampleFromFile(file, rowIndex) {
+  ensureAudioContext();
+  const arrayBuffer = await file.arrayBuffer();
+  state.sampleBuffers[rowIndex] = await audioCtx.decodeAudioData(arrayBuffer);
+  // Auto-set name from filename (strip extension)
+  const name = file.name.replace(/\.[^.]+$/, "");
+  state.sampleNames[rowIndex] = name;
+  // Update the name input in the UI without a full re-render
+  const nameInput = gridContainer.querySelector(`.row-label[data-row="${rowIndex}"] input[type="text"]`);
+  if (nameInput) nameInput.value = name;
+}
+
+// ---- Grid State -----------------------------------------------------------
+
+function initGrid() {
+  state.grid = [];
+  for (let r = 0; r < state.numSamples; r++) {
+    state.grid[r] = state.grid[r] || [];
+    // Ensure correct length
+    const row = state.grid[r];
+    while (row.length < state.numBeats) row.push(false);
+    row.length = state.numBeats;
+  }
+  state.grid.length = state.numSamples;
+
+  while (state.sampleBuffers.length < state.numSamples) state.sampleBuffers.push(null);
+  state.sampleBuffers.length = state.numSamples;
+
+  while (state.sampleNames.length < state.numSamples) state.sampleNames.push("");
+  state.sampleNames.length = state.numSamples;
+}
+
+// ---- Grid UI --------------------------------------------------------------
+
+const gridContainer = document.getElementById("grid-container");
+
+function renderGrid() {
+  gridContainer.innerHTML = "";
+
+  // CSS grid: first column for labels, then one per beat
+  const cols = `150px repeat(${state.numBeats}, 1fr)`;
+  gridContainer.style.gridTemplateColumns = cols;
+
+  // Header row — corner spacer + beat numbers
+  const spacer = document.createElement("div");
+  spacer.className = "corner-spacer";
+  gridContainer.appendChild(spacer);
+
+  for (let c = 0; c < state.numBeats; c++) {
+    const hdr = document.createElement("div");
+    hdr.className = "beat-header";
+    hdr.dataset.col = c;
+    hdr.textContent = c + 1;
+    gridContainer.appendChild(hdr);
+  }
+
+  // Sample rows
+  for (let r = 0; r < state.numSamples; r++) {
+    // Label cell
+    const label = document.createElement("div");
+    label.className = "row-label";
+    label.dataset.row = r;
+
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.value = state.sampleNames[r];
+    nameInput.placeholder = "sample";
+    nameInput.addEventListener("change", () => {
+      state.sampleNames[r] = nameInput.value;
+    });
+
+    const triggerBtn = document.createElement("button");
+    triggerBtn.textContent = "\u25B6";
+    triggerBtn.title = "Test sample";
+    triggerBtn.addEventListener("click", () => {
+      ensureAudioContext();
+      playSample(r);
+    });
+
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "audio/*";
+    fileInput.style.display = "none";
+    fileInput.addEventListener("change", () => {
+      if (fileInput.files.length > 0) {
+        loadSampleFromFile(fileInput.files[0], r);
+      }
+    });
+
+    const loadBtn = document.createElement("button");
+    loadBtn.textContent = "\uD83D\uDCC2";
+    loadBtn.title = "Load sample";
+    loadBtn.addEventListener("click", () => fileInput.click());
+
+    label.appendChild(nameInput);
+    label.appendChild(triggerBtn);
+    label.appendChild(loadBtn);
+    label.appendChild(fileInput);
+    gridContainer.appendChild(label);
+
+    // Beat cells
+    for (let c = 0; c < state.numBeats; c++) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      cell.dataset.row = r;
+      cell.dataset.col = c;
+      if (state.grid[r][c]) cell.classList.add("active");
+      if (state.isPlaying && c === state.currentBeat) cell.classList.add("current");
+
+      cell.addEventListener("click", () => {
+        state.grid[r][c] = !state.grid[r][c];
+        cell.classList.toggle("active");
+      });
+
+      gridContainer.appendChild(cell);
+    }
+  }
+}
+
+function updateBeatHighlight() {
+  // Remove old current markers
+  gridContainer.querySelectorAll(".current").forEach((el) => el.classList.remove("current"));
+
+  if (!state.isPlaying) return;
+
+  // Highlight beat headers and cells for currentBeat
+  gridContainer.querySelectorAll(`.beat-header[data-col="${state.currentBeat}"]`).forEach((el) => {
+    el.classList.add("current");
+  });
+  gridContainer.querySelectorAll(`.cell[data-col="${state.currentBeat}"]`).forEach((el) => {
+    el.classList.add("current");
+  });
+}
+
+// ---- Sequencer ------------------------------------------------------------
+
+function getIntervalMs(beatIndex) {
+  const baseBeatMs = (60 / state.bpm / 4) * 1000; // sixteenth-note duration
+  // Swing offsets even-indexed beats (0-indexed, so indices 1, 3, 5, … are the "off" beats)
+  if (beatIndex % 2 === 1 && state.swing > 0) {
+    return baseBeatMs * (1 + state.swing);
+  }
+  if (beatIndex % 2 === 0 && state.swing > 0) {
+    return baseBeatMs * (1 - state.swing);
+  }
+  return baseBeatMs;
+}
+
+function stepBeat() {
+  // Trigger samples for the current beat
+  for (let r = 0; r < state.numSamples; r++) {
+    if (state.grid[r] && state.grid[r][state.currentBeat]) {
+      playSample(r);
+    }
+  }
+  updateBeatHighlight();
+
+  // Schedule next beat
+  const nextBeat = (state.currentBeat + 1) % state.numBeats;
+  const interval = getIntervalMs(state.currentBeat);
+  state.currentBeat = nextBeat;
+
+  timerId = setTimeout(stepBeat, interval);
+}
+
+function startPlayback() {
+  if (state.isPlaying) return;
+  ensureAudioContext();
+  state.isPlaying = true;
+  stepBeat();
+}
+
+function pausePlayback() {
+  state.isPlaying = false;
+  clearTimeout(timerId);
+  timerId = null;
+  updateBeatHighlight();
+}
+
+function resetPlayback() {
+  pausePlayback();
+  state.currentBeat = 0;
+  updateBeatHighlight();
+}
+
+// ---- Transport Controls ---------------------------------------------------
+
+document.getElementById("btn-play").addEventListener("click", startPlayback);
+document.getElementById("btn-pause").addEventListener("click", pausePlayback);
+document.getElementById("btn-reset").addEventListener("click", resetPlayback);
+
+// ---- Swing ----------------------------------------------------------------
+
+const swingSlider = document.getElementById("swing-slider");
+const swingValue = document.getElementById("swing-value");
+swingSlider.addEventListener("input", () => {
+  state.swing = parseFloat(swingSlider.value);
+  swingValue.textContent = state.swing.toFixed(2);
+});
+
+// ---- Config Inputs --------------------------------------------------------
+
+const inputBeats = document.getElementById("input-beats");
+const inputSamples = document.getElementById("input-samples");
+const inputBpm = document.getElementById("input-bpm");
+
+inputBeats.addEventListener("change", () => {
+  const val = parseInt(inputBeats.value, 10);
+  if (val >= 1 && val <= 64) {
+    state.numBeats = val;
+    initGrid();
+    renderGrid();
+  }
+});
+
+inputSamples.addEventListener("change", () => {
+  const val = parseInt(inputSamples.value, 10);
+  if (val >= 1 && val <= 16) {
+    state.numSamples = val;
+    initGrid();
+    renderGrid();
+  }
+});
+
+inputBpm.addEventListener("change", () => {
+  const val = parseInt(inputBpm.value, 10);
+  if (val >= 20 && val <= 300) {
+    state.bpm = val;
+  }
+});
+
+// ---- Initialization -------------------------------------------------------
+
+async function init() {
+  // Set up default sample names
+  for (let i = 0; i < DEFAULT_SAMPLES.length && i < state.numSamples; i++) {
+    state.sampleNames[i] = DEFAULT_SAMPLES[i].name;
+  }
+
+  initGrid();
+  renderGrid();
+
+  // Pre-load default samples (audio context created on first user click)
+  try {
+    ensureAudioContext();
+    for (let i = 0; i < DEFAULT_SAMPLES.length && i < state.numSamples; i++) {
+      state.sampleBuffers[i] = await loadSample(DEFAULT_SAMPLES[i].url);
+    }
+  } catch (err) {
+    console.warn("Could not pre-load samples (AudioContext may require user gesture):", err);
+  }
+}
+
+init();
