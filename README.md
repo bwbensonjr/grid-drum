@@ -1,2 +1,4 @@
-# grid-drum
-A grid-based drum machine
+# GridDrum
+
+A grid-based drum machine.
+
