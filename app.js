@@ -3,6 +3,8 @@
 // ---------------------------------------------------------------------------
 
 const DEFAULT_SAMPLES = [
+  { name: "crash", url: "samples/crash.wav" },
+  { name: "ride", url: "samples/ride.wav" },
   { name: "hihat", url: "samples/hihat.wav" },
   { name: "rim", url: "samples/rim.wav" },
   { name: "snare", url: "samples/snare.wav" },
