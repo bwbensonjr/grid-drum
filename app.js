@@ -15,7 +15,7 @@ const DEFAULT_SAMPLES = [
 
 const state = {
   numBeats: 16,
-  numSamples: 4,
+  numSamples: DEFAULT_SAMPLES.length,
   bpm: 120,
   swing: 0,
   isPlaying: false,
@@ -261,15 +261,10 @@ function startPlayback() {
   stepBeat();
 }
 
-function pausePlayback() {
+function resetPlayback() {
   state.isPlaying = false;
   clearTimeout(timerId);
   timerId = null;
-  updateBeatHighlight();
-}
-
-function resetPlayback() {
-  pausePlayback();
   state.currentBeat = 0;
   updateBeatHighlight();
 }
@@ -277,7 +272,6 @@ function resetPlayback() {
 // ---- Transport Controls ---------------------------------------------------
 
 document.getElementById("btn-play").addEventListener("click", startPlayback);
-document.getElementById("btn-pause").addEventListener("click", pausePlayback);
 document.getElementById("btn-reset").addEventListener("click", resetPlayback);
 
 // ---- Swing ----------------------------------------------------------------
@@ -307,6 +301,87 @@ inputBpm.addEventListener("change", () => {
   const val = parseInt(inputBpm.value, 10);
   if (val >= 20 && val <= 300) {
     state.bpm = val;
+  }
+});
+
+// ---- Save / Load ----------------------------------------------------------
+
+function savePattern() {
+  const data = {
+    version: 1,
+    numBeats: state.numBeats,
+    bpm: state.bpm,
+    swing: state.swing,
+    samples: state.sampleNames.slice(),
+    grid: state.grid.map((row) => row.slice()),
+  };
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "grid-drum-pattern.json";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+async function loadPattern(file) {
+  const text = await file.text();
+  const data = JSON.parse(text);
+
+  if (data.version !== 1) {
+    console.error("Unsupported pattern version:", data.version);
+    return;
+  }
+
+  // Stop playback before applying
+  resetPlayback();
+
+  // Restore state
+  state.numBeats = data.numBeats;
+  state.bpm = data.bpm;
+  state.swing = data.swing;
+  state.numSamples = data.samples.length;
+  state.sampleNames = data.samples.slice();
+  state.grid = data.grid.map((row) => row.slice());
+
+  // Re-match default samples by name
+  state.sampleBuffers = [];
+  for (let i = 0; i < state.numSamples; i++) {
+    const match = DEFAULT_SAMPLES.find((s) => s.name === state.sampleNames[i]);
+    if (match) {
+      try {
+        ensureAudioContext();
+        state.sampleBuffers[i] = await loadSample(match.url);
+      } catch {
+        state.sampleBuffers[i] = null;
+      }
+    } else {
+      state.sampleBuffers[i] = null;
+    }
+  }
+
+  // Update UI inputs
+  inputBeats.value = state.numBeats;
+  inputBpm.value = state.bpm;
+  swingSlider.value = state.swing;
+  swingValue.textContent = state.swing.toFixed(2);
+
+  renderGrid();
+}
+
+document.getElementById("btn-save").addEventListener("click", savePattern);
+
+const fileLoadInput = document.getElementById("file-load-input");
+document.getElementById("btn-load").addEventListener("click", () => {
+  fileLoadInput.value = "";
+  fileLoadInput.click();
+});
+fileLoadInput.addEventListener("change", () => {
+  if (fileLoadInput.files.length > 0) {
+    loadPattern(fileLoadInput.files[0]);
   }
 });
 

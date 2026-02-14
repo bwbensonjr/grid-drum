@@ -17,8 +17,7 @@
     <div id="controls">
       <div id="transport">
         <button id="btn-play" title="Play">&#9654;</button>
-        <button id="btn-pause" title="Pause">&#9208;</button>
-        <button id="btn-reset" title="Reset">&#9209;</button>
+        <button id="btn-reset" title="Stop">&#9209;</button>
       </div>
 
       <div id="swing-control">
@@ -33,6 +32,12 @@
 
         <label for="input-bpm">BPM</label>
         <input type="number" id="input-bpm" min="20" max="300" value="120">
+      </div>
+
+      <div id="file-controls">
+        <button id="btn-save" title="Save pattern">Save</button>
+        <button id="btn-load" title="Load pattern">Load</button>
+        <input type="file" id="file-load-input" accept=".json" style="display:none">
       </div>
     </div>
   </main>

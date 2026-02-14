@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "numBeats": 16,
+  "bpm": 80,
+  "swing": 0,
+  "samples": [
+    "hihat",
+    "snare",
+    "kick"
+  ],
+  "grid": [
+    [
+      false,
+      true,
+      false,
+      true,
+      false,
+      true,
+      true,
+      false,
+      true,
+      false,
+      false,
+      true,
+      false,
+      true,
+      true,
+      true
+    ],
+    [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      true,
+      false,
+      true,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false
+    ],
+    [
+      true,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  ]
+}

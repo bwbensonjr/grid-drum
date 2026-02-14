@@ -208,3 +208,22 @@ main {
   font-size: 0.85rem;
   text-align: center;
 }
+
+#file-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+#file-controls button {
+  font-size: 0.85rem;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 4px;
+  background: #0f3460;
+  color: #e0e0e0;
+  cursor: pointer;
+}
+
+#file-controls button:hover {
+  background: #e94560;
+}
