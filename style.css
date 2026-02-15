@@ -49,8 +49,9 @@ main {
 .row-label {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 4px;
-  min-width: 190px;
+  min-width: 240px;
 }
 
 .row-label input[type="text"] {
@@ -130,7 +131,7 @@ main {
 
 /* Corner spacer (top-left of grid) */
 .corner-spacer {
-  min-width: 190px;
+  min-width: 240px;
 }
 
 /* ---- Controls ---- */
@@ -226,4 +227,45 @@ main {
 
 #file-controls button:hover {
   background: #e94560;
+}
+
+/* ---- Row Mixer Controls ---- */
+
+.row-mixer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.vol-slider {
+  width: 80px;
+  accent-color: #e94560;
+}
+
+.btn-mute,
+.btn-solo {
+  background: #0f3460;
+  border: none;
+  color: #e0e0e0;
+  padding: 2px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.7rem;
+  font-weight: bold;
+}
+
+.btn-mute:hover,
+.btn-solo:hover {
+  opacity: 0.85;
+}
+
+.btn-mute.engaged {
+  background: #c0392b;
+  color: #fff;
+}
+
+.btn-solo.engaged {
+  background: #d4a017;
+  color: #fff;
 }

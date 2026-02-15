@@ -26,10 +26,14 @@ const state = {
   grid: [],        // [row][col] booleans
   sampleBuffers: [],  // AudioBuffer per row (or null)
   sampleNames: [],    // display name per row
+  sampleVolumes: [],  // float 0.0–1.0 per row
+  sampleMutes: [],    // boolean per row
+  sampleSolos: [],    // boolean per row
 };
 
 let audioCtx = null;
 let timerId = null;
+const rowGainNodes = []; // GainNode per row (not serializable, so outside state)
 
 // ---- Audio Engine ---------------------------------------------------------
 
@@ -49,12 +53,39 @@ async function loadSample(url) {
   return audioCtx.decodeAudioData(arrayBuffer);
 }
 
+// ---- Mixer Gain Logic -----------------------------------------------------
+
+function computeEffectiveGain(rowIndex) {
+  if (state.sampleMutes[rowIndex]) return 0;
+  const anySolo = state.sampleSolos.some(Boolean);
+  if (anySolo && !state.sampleSolos[rowIndex]) return 0;
+  return state.sampleVolumes[rowIndex] ?? 0.8;
+}
+
+function createRowGainNode(rowIndex) {
+  ensureAudioContext();
+  const gain = audioCtx.createGain();
+  gain.gain.value = computeEffectiveGain(rowIndex);
+  gain.connect(audioCtx.destination);
+  rowGainNodes[rowIndex] = gain;
+  return gain;
+}
+
+function updateAllGains() {
+  for (let r = 0; r < state.numSamples; r++) {
+    if (rowGainNodes[r]) {
+      rowGainNodes[r].gain.value = computeEffectiveGain(r);
+    }
+  }
+}
+
 function playSample(rowIndex) {
   if (!state.sampleBuffers[rowIndex]) return;
   ensureAudioContext();
+  if (!rowGainNodes[rowIndex]) createRowGainNode(rowIndex);
   const source = audioCtx.createBufferSource();
   source.buffer = state.sampleBuffers[rowIndex];
-  source.connect(audioCtx.destination);
+  source.connect(rowGainNodes[rowIndex]);
   source.start(0);
 }
 
@@ -88,6 +119,21 @@ function initGrid() {
 
   while (state.sampleNames.length < state.numSamples) state.sampleNames.push("");
   state.sampleNames.length = state.numSamples;
+
+  while (state.sampleVolumes.length < state.numSamples) state.sampleVolumes.push(0.8);
+  state.sampleVolumes.length = state.numSamples;
+
+  while (state.sampleMutes.length < state.numSamples) state.sampleMutes.push(false);
+  state.sampleMutes.length = state.numSamples;
+
+  while (state.sampleSolos.length < state.numSamples) state.sampleSolos.push(false);
+  state.sampleSolos.length = state.numSamples;
+
+  // Disconnect stale GainNodes beyond current row count
+  for (let i = state.numSamples; i < rowGainNodes.length; i++) {
+    if (rowGainNodes[i]) { rowGainNodes[i].disconnect(); rowGainNodes[i] = null; }
+  }
+  rowGainNodes.length = state.numSamples;
 }
 
 // ---- Row Add/Remove -------------------------------------------------------
@@ -98,15 +144,27 @@ function addRowAfter(rowIndex) {
   state.grid.splice(insertAt, 0, new Array(state.numBeats).fill(false));
   state.sampleBuffers.splice(insertAt, 0, null);
   state.sampleNames.splice(insertAt, 0, "");
+  state.sampleVolumes.splice(insertAt, 0, 0.8);
+  state.sampleMutes.splice(insertAt, 0, false);
+  state.sampleSolos.splice(insertAt, 0, false);
+  rowGainNodes.splice(insertAt, 0, null);
   renderGrid();
 }
 
 function removeRow(rowIndex) {
   if (state.numSamples <= 1) return;
+  if (rowGainNodes[rowIndex]) {
+    rowGainNodes[rowIndex].disconnect();
+  }
   state.numSamples--;
   state.grid.splice(rowIndex, 1);
   state.sampleBuffers.splice(rowIndex, 1);
   state.sampleNames.splice(rowIndex, 1);
+  state.sampleVolumes.splice(rowIndex, 1);
+  state.sampleMutes.splice(rowIndex, 1);
+  state.sampleSolos.splice(rowIndex, 1);
+  rowGainNodes.splice(rowIndex, 1);
+  updateAllGains();
   renderGrid();
 }
 
@@ -118,7 +176,7 @@ function renderGrid() {
   gridContainer.innerHTML = "";
 
   // CSS grid: first column for labels, then one per beat
-  const cols = `190px repeat(${state.numBeats}, 1fr)`;
+  const cols = `240px repeat(${state.numBeats}, 1fr)`;
   gridContainer.style.gridTemplateColumns = cols;
 
   // Header row — corner spacer + beat numbers
@@ -190,6 +248,50 @@ function renderGrid() {
     label.appendChild(fileInput);
     label.appendChild(nameInput);
     label.appendChild(triggerBtn);
+
+    // Mixer row: volume slider, mute, solo
+    const mixer = document.createElement("div");
+    mixer.className = "row-mixer";
+
+    const volSlider = document.createElement("input");
+    volSlider.type = "range";
+    volSlider.className = "vol-slider";
+    volSlider.min = "0";
+    volSlider.max = "1";
+    volSlider.step = "0.01";
+    volSlider.value = state.sampleVolumes[r];
+    volSlider.addEventListener("input", () => {
+      state.sampleVolumes[r] = parseFloat(volSlider.value);
+      if (rowGainNodes[r]) {
+        rowGainNodes[r].gain.value = computeEffectiveGain(r);
+      }
+    });
+
+    const muteBtn = document.createElement("button");
+    muteBtn.className = "btn-mute" + (state.sampleMutes[r] ? " engaged" : "");
+    muteBtn.textContent = "M";
+    muteBtn.title = "Mute";
+    muteBtn.addEventListener("click", () => {
+      state.sampleMutes[r] = !state.sampleMutes[r];
+      muteBtn.classList.toggle("engaged");
+      updateAllGains();
+    });
+
+    const soloBtn = document.createElement("button");
+    soloBtn.className = "btn-solo" + (state.sampleSolos[r] ? " engaged" : "");
+    soloBtn.textContent = "S";
+    soloBtn.title = "Solo";
+    soloBtn.addEventListener("click", () => {
+      state.sampleSolos[r] = !state.sampleSolos[r];
+      soloBtn.classList.toggle("engaged");
+      updateAllGains();
+    });
+
+    mixer.appendChild(volSlider);
+    mixer.appendChild(muteBtn);
+    mixer.appendChild(soloBtn);
+    label.appendChild(mixer);
+
     gridContainer.appendChild(label);
 
     // Beat cells
@@ -322,12 +424,15 @@ inputBpm.addEventListener("change", () => {
 
 function savePattern() {
   const data = {
-    version: 1,
+    version: 2,
     numBeats: state.numBeats,
     bpm: state.bpm,
     swing: state.swing,
     samples: state.sampleNames.slice(),
     grid: state.grid.map((row) => row.slice()),
+    volumes: state.sampleVolumes.slice(),
+    mutes: state.sampleMutes.slice(),
+    solos: state.sampleSolos.slice(),
   };
   const json = JSON.stringify(data, null, 2);
   const blob = new Blob([json], { type: "application/json" });
@@ -345,7 +450,7 @@ async function loadPattern(file) {
   const text = await file.text();
   const data = JSON.parse(text);
 
-  if (data.version !== 1) {
+  if (data.version !== 1 && data.version !== 2) {
     console.error("Unsupported pattern version:", data.version);
     return;
   }
@@ -360,6 +465,17 @@ async function loadPattern(file) {
   state.numSamples = data.samples.length;
   state.sampleNames = data.samples.slice();
   state.grid = data.grid.map((row) => row.slice());
+
+  // Restore mixer state (v2) or defaults (v1)
+  state.sampleVolumes = data.volumes ? data.volumes.slice() : new Array(state.numSamples).fill(0.8);
+  state.sampleMutes = data.mutes ? data.mutes.slice() : new Array(state.numSamples).fill(false);
+  state.sampleSolos = data.solos ? data.solos.slice() : new Array(state.numSamples).fill(false);
+
+  // Disconnect and reset all GainNodes
+  for (let i = 0; i < rowGainNodes.length; i++) {
+    if (rowGainNodes[i]) { rowGainNodes[i].disconnect(); rowGainNodes[i] = null; }
+  }
+  rowGainNodes.length = state.numSamples;
 
   // Re-match default samples by name
   state.sampleBuffers = [];
