@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "numBeats": 16,
   "bpm": 80,
   "swing": 0,
@@ -10,58 +10,72 @@
   ],
   "grid": [
     [
-      false,
-      true,
-      false,
-      true,
-      false,
-      true,
-      true,
-      false,
-      true,
-      false,
-      false,
-      true,
-      false,
-      true,
-      true,
-      true
+      0,
+      1
     ],
     [
-      false,
-      false,
-      false,
-      false,
-      true,
-      false,
-      false,
-      true,
-      false,
-      true,
-      false,
-      false,
-      true,
-      false,
-      false,
-      false
+      0,
+      3
     ],
     [
-      true,
-      false,
-      true,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      true,
-      false,
-      false,
-      false,
-      false,
-      false
+      0,
+      5
+    ],
+    [
+      0,
+      6
+    ],
+    [
+      0,
+      8
+    ],
+    [
+      0,
+      11
+    ],
+    [
+      0,
+      13
+    ],
+    [
+      0,
+      14
+    ],
+    [
+      0,
+      15
+    ],
+    [
+      1,
+      4
+    ],
+    [
+      1,
+      7
+    ],
+    [
+      1,
+      9
+    ],
+    [
+      1,
+      12
+    ],
+    [
+      2,
+      0
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      2,
+      10
     ]
-  ]
+  ],
+  "volumes": {},
+  "mutes": {},
+  "solos": {},
+  "name": "Talk Down"
 }

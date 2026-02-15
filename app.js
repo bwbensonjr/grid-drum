@@ -18,6 +18,7 @@ const DEFAULT_SAMPLES = [
 // ---- State ----------------------------------------------------------------
 
 const state = {
+  patternName: "",
   numBeats: 16,
   numSamples: DEFAULT_SAMPLES.length,
   bpm: 120,
@@ -410,8 +411,14 @@ swingSlider.addEventListener("input", () => {
 
 // ---- Config Inputs --------------------------------------------------------
 
+const inputPatternName = document.getElementById("input-pattern-name");
 const inputBeats = document.getElementById("input-beats");
 const inputBpm = document.getElementById("input-bpm");
+
+inputPatternName.addEventListener("change", () => {
+  state.patternName = inputPatternName.value;
+  scheduleHashUpdate();
+});
 
 inputBeats.addEventListener("change", () => {
   const val = parseInt(inputBeats.value, 10);
@@ -434,7 +441,7 @@ inputBpm.addEventListener("change", () => {
 // ---- Save / Load ----------------------------------------------------------
 
 function buildPatternData() {
-  return {
+  const data = {
     version: 2,
     numBeats: state.numBeats,
     bpm: state.bpm,
@@ -453,6 +460,8 @@ function buildPatternData() {
       state.sampleSolos.map((v, i) => [i, v]).filter(([, v]) => v !== false)
     ),
   };
+  if (state.patternName) data.name = state.patternName;
+  return data;
 }
 
 function savePattern() {
@@ -461,7 +470,10 @@ function savePattern() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "grid-drum-pattern.json";
+  const slug = state.patternName
+    ? state.patternName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
+    : "grid-drum";
+  a.download = slug + "-pattern.json";
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -473,6 +485,7 @@ async function applyPatternData(data) {
   resetPlayback();
 
   // Restore state
+  state.patternName = data.name || "";
   state.numBeats = data.numBeats;
   state.bpm = data.bpm;
   state.swing = data.swing;
@@ -535,6 +548,7 @@ async function applyPatternData(data) {
   }
 
   // Update UI inputs
+  inputPatternName.value = state.patternName;
   inputBeats.value = state.numBeats;
   inputBpm.value = state.bpm;
   swingSlider.value = state.swing;

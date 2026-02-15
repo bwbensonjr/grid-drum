@@ -213,8 +213,24 @@ main {
   text-align: center;
 }
 
+#file-controls label {
+  font-size: 0.85rem;
+}
+
+#input-pattern-name {
+  width: 200px;
+  text-align: left;
+  background: #1a1a2e;
+  border: 1px solid #0f3460;
+  color: #e0e0e0;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
 #file-controls {
   display: flex;
+  align-items: center;
   gap: 0.5rem;
 }
 
