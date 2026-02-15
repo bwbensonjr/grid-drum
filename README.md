@@ -15,6 +15,6 @@ Currently on the web at [https://bwbensonjr.github.io/grid-drum](https://bwbenso
 * Save and load current settings with Save/Load or by copying/bookmarking URL.
 * Per-sample settings:
   * Play
-  * Set volume
+  * Volume
   * Mute (M)
   * Solo (S)
