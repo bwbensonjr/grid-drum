@@ -42,8 +42,8 @@ const rowGainNodes = []; // GainNode per row (not serializable, so outside state
 function ensureAudioContext() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.audioSession) {
-      audioCtx.audioSession.type = "playback";
+    if (navigator.audioSession) {
+      navigator.audioSession.type = "playback";
     }
   }
   if (audioCtx.state === "suspended") {
