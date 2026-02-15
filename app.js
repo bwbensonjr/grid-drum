@@ -149,6 +149,7 @@ function addRowAfter(rowIndex) {
   state.sampleSolos.splice(insertAt, 0, false);
   rowGainNodes.splice(insertAt, 0, null);
   renderGrid();
+  scheduleHashUpdate();
 }
 
 function removeRow(rowIndex) {
@@ -166,6 +167,7 @@ function removeRow(rowIndex) {
   rowGainNodes.splice(rowIndex, 1);
   updateAllGains();
   renderGrid();
+  scheduleHashUpdate();
 }
 
 // ---- Grid UI --------------------------------------------------------------
@@ -205,6 +207,7 @@ function renderGrid() {
     nameInput.placeholder = "sample";
     nameInput.addEventListener("change", () => {
       state.sampleNames[r] = nameInput.value;
+      scheduleHashUpdate();
     });
 
     const triggerBtn = document.createElement("button");
@@ -221,7 +224,7 @@ function renderGrid() {
     fileInput.style.display = "none";
     fileInput.addEventListener("change", () => {
       if (fileInput.files.length > 0) {
-        loadSampleFromFile(fileInput.files[0], r);
+        loadSampleFromFile(fileInput.files[0], r).then(scheduleHashUpdate);
       }
     });
 
@@ -265,6 +268,7 @@ function renderGrid() {
       if (rowGainNodes[r]) {
         rowGainNodes[r].gain.value = computeEffectiveGain(r);
       }
+      scheduleHashUpdate();
     });
 
     const muteBtn = document.createElement("button");
@@ -275,6 +279,7 @@ function renderGrid() {
       state.sampleMutes[r] = !state.sampleMutes[r];
       muteBtn.classList.toggle("engaged");
       updateAllGains();
+      scheduleHashUpdate();
     });
 
     const soloBtn = document.createElement("button");
@@ -285,6 +290,7 @@ function renderGrid() {
       state.sampleSolos[r] = !state.sampleSolos[r];
       soloBtn.classList.toggle("engaged");
       updateAllGains();
+      scheduleHashUpdate();
     });
 
     mixer.appendChild(volSlider);
@@ -306,6 +312,7 @@ function renderGrid() {
       cell.addEventListener("click", () => {
         state.grid[r][c] = !state.grid[r][c];
         cell.classList.toggle("active");
+        scheduleHashUpdate();
       });
 
       gridContainer.appendChild(cell);
@@ -397,6 +404,7 @@ const swingValue = document.getElementById("swing-value");
 swingSlider.addEventListener("input", () => {
   state.swing = parseFloat(swingSlider.value);
   swingValue.textContent = state.swing.toFixed(2);
+  scheduleHashUpdate();
 });
 
 // ---- Config Inputs --------------------------------------------------------
@@ -410,6 +418,7 @@ inputBeats.addEventListener("change", () => {
     state.numBeats = val;
     initGrid();
     renderGrid();
+    scheduleHashUpdate();
   }
 });
 
@@ -417,13 +426,14 @@ inputBpm.addEventListener("change", () => {
   const val = parseInt(inputBpm.value, 10);
   if (val >= 20 && val <= 300) {
     state.bpm = val;
+    scheduleHashUpdate();
   }
 });
 
 // ---- Save / Load ----------------------------------------------------------
 
-function savePattern() {
-  const data = {
+function buildPatternData() {
+  return {
     version: 2,
     numBeats: state.numBeats,
     bpm: state.bpm,
@@ -442,7 +452,10 @@ function savePattern() {
       state.sampleSolos.map((v, i) => [i, v]).filter(([, v]) => v !== false)
     ),
   };
-  const json = JSON.stringify(data, null, 2);
+}
+
+function savePattern() {
+  const json = JSON.stringify(buildPatternData(), null, 2);
   const blob = new Blob([json], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -454,15 +467,7 @@ function savePattern() {
   URL.revokeObjectURL(url);
 }
 
-async function loadPattern(file) {
-  const text = await file.text();
-  const data = JSON.parse(text);
-
-  if (data.version !== 1 && data.version !== 2) {
-    console.error("Unsupported pattern version:", data.version);
-    return;
-  }
-
+async function applyPatternData(data) {
   // Stop playback before applying
   resetPlayback();
 
@@ -535,9 +540,70 @@ async function loadPattern(file) {
   swingValue.textContent = state.swing.toFixed(2);
 
   renderGrid();
+  scheduleHashUpdate();
+}
+
+async function loadPattern(file) {
+  const text = await file.text();
+  const data = JSON.parse(text);
+
+  if (data.version !== 1 && data.version !== 2) {
+    console.error("Unsupported pattern version:", data.version);
+    return;
+  }
+
+  await applyPatternData(data);
 }
 
 document.getElementById("btn-save").addEventListener("click", savePattern);
+
+// ---- URL Hash Encoding ----------------------------------------------------
+
+function base64urlEncode(str) {
+  return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function base64urlDecode(str) {
+  str = str.replace(/-/g, "+").replace(/_/g, "/");
+  while (str.length % 4) str += "=";
+  return atob(str);
+}
+
+function encodePatternToHash() {
+  const json = JSON.stringify(buildPatternData());
+  return "v2=" + base64urlEncode(json);
+}
+
+function decodePatternFromHash() {
+  try {
+    const hash = window.location.hash.slice(1); // strip #
+    if (!hash.startsWith("v2=")) return null;
+    const encoded = hash.slice(3);
+    const json = base64urlDecode(encoded);
+    return JSON.parse(json);
+  } catch (err) {
+    console.error("Failed to decode pattern from URL hash:", err);
+    return null;
+  }
+}
+
+let hashUpdateTimer = null;
+
+function updateUrlHash() {
+  history.replaceState(null, "", "#" + encodePatternToHash());
+}
+
+function scheduleHashUpdate() {
+  clearTimeout(hashUpdateTimer);
+  hashUpdateTimer = setTimeout(updateUrlHash, 300);
+}
+
+window.addEventListener("hashchange", () => {
+  const data = decodePatternFromHash();
+  if (data) {
+    applyPatternData(data);
+  }
+});
 
 const fileLoadInput = document.getElementById("file-load-input");
 document.getElementById("btn-load").addEventListener("click", () => {
@@ -553,7 +619,14 @@ fileLoadInput.addEventListener("change", () => {
 // ---- Initialization -------------------------------------------------------
 
 async function init() {
-  // Set up default sample names
+  // Try restoring state from URL hash
+  const hashData = decodePatternFromHash();
+  if (hashData) {
+    await applyPatternData(hashData);
+    return;
+  }
+
+  // Default setup
   for (let i = 0; i < DEFAULT_SAMPLES.length && i < state.numSamples; i++) {
     state.sampleNames[i] = DEFAULT_SAMPLES[i].name;
   }
@@ -570,6 +643,8 @@ async function init() {
   } catch (err) {
     console.warn("Could not pre-load samples (AudioContext may require user gesture):", err);
   }
+
+  updateUrlHash();
 }
 
 init();
