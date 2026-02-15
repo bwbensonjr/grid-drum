@@ -19,4 +19,5 @@ Currently on the web at [https://bwbensonjr.github.io/grid-drum](https://bwbenso
   * Mute (M)
   * Solo (S)
 * Add an optional pattern name
+* Reset to get default settings and empty grid
 

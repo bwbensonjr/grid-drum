@@ -631,6 +631,51 @@ fileLoadInput.addEventListener("change", () => {
   }
 });
 
+// ---- Reset to Defaults ----------------------------------------------------
+
+async function resetToDefaults() {
+  resetPlayback();
+
+  state.patternName = "";
+  state.numBeats = 16;
+  state.bpm = 120;
+  state.swing = 0;
+  state.numSamples = DEFAULT_SAMPLES.length;
+  state.sampleNames = DEFAULT_SAMPLES.map((s) => s.name);
+  state.grid = Array.from({ length: state.numSamples }, () =>
+    new Array(state.numBeats).fill(false)
+  );
+  state.sampleVolumes = new Array(state.numSamples).fill(0.8);
+  state.sampleMutes = new Array(state.numSamples).fill(false);
+  state.sampleSolos = new Array(state.numSamples).fill(false);
+
+  for (let i = 0; i < rowGainNodes.length; i++) {
+    if (rowGainNodes[i]) { rowGainNodes[i].disconnect(); rowGainNodes[i] = null; }
+  }
+  rowGainNodes.length = state.numSamples;
+
+  state.sampleBuffers = [];
+  for (let i = 0; i < state.numSamples; i++) {
+    try {
+      ensureAudioContext();
+      state.sampleBuffers[i] = await loadSample(DEFAULT_SAMPLES[i].url);
+    } catch {
+      state.sampleBuffers[i] = null;
+    }
+  }
+
+  inputPatternName.value = "";
+  inputBeats.value = state.numBeats;
+  inputBpm.value = state.bpm;
+  swingSlider.value = state.swing;
+  swingValue.textContent = state.swing.toFixed(2);
+
+  renderGrid();
+  scheduleHashUpdate();
+}
+
+document.getElementById("btn-reset-pattern").addEventListener("click", resetToDefaults);
+
 // ---- Initialization -------------------------------------------------------
 
 async function init() {
