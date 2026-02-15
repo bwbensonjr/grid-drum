@@ -274,8 +274,19 @@ function resetPlayback() {
 
 // ---- Transport Controls ---------------------------------------------------
 
-document.getElementById("btn-play").addEventListener("click", startPlayback);
-document.getElementById("btn-reset").addEventListener("click", resetPlayback);
+const btnPlay = document.getElementById("btn-play");
+const btnReset = document.getElementById("btn-reset");
+btnPlay.addEventListener("click", () => { startPlayback(); btnPlay.blur(); });
+btnReset.addEventListener("click", () => { resetPlayback(); btnReset.blur(); });
+
+document.addEventListener("keydown", (event) => {
+  if (event.repeat) return;
+  if (event.code !== "Space") return;
+  const tag = document.activeElement?.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA") return;
+  event.preventDefault();
+  state.isPlaying ? resetPlayback() : startPlayback();
+});
 
 // ---- Swing ----------------------------------------------------------------
 
