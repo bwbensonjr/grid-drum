@@ -18,5 +18,5 @@ Currently on the web at [https://bwbensonjr.github.io/grid-drum](https://bwbenso
   * Volume
   * Mute (M)
   * Solo (S)
-* Optional pattern name
+* Add an optional pattern name
 

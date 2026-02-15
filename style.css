@@ -288,3 +288,29 @@ main {
   background: #d4a017;
   color: #fff;
 }
+
+/* ---- Directions ---- */
+
+#directions {
+  margin-top: 1.5rem;
+  padding: 1rem 1.5rem;
+  background: #16213e;
+  border-radius: 6px;
+  color: #888;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+#directions h2 {
+  font-size: 0.95rem;
+  color: #aaa;
+  margin-bottom: 0.5rem;
+}
+
+#directions ul {
+  margin-left: 1.2rem;
+}
+
+#directions ul ul {
+  margin-top: 0.2rem;
+}
