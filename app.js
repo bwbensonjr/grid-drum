@@ -429,10 +429,18 @@ function savePattern() {
     bpm: state.bpm,
     swing: state.swing,
     samples: state.sampleNames.slice(),
-    grid: state.grid.map((row) => row.slice()),
-    volumes: state.sampleVolumes.slice(),
-    mutes: state.sampleMutes.slice(),
-    solos: state.sampleSolos.slice(),
+    grid: state.grid.flatMap((row, r) =>
+      row.map((on, c) => on ? [r, c] : null).filter(Boolean)
+    ),
+    volumes: Object.fromEntries(
+      state.sampleVolumes.map((v, i) => [i, v]).filter(([, v]) => v !== 0.8)
+    ),
+    mutes: Object.fromEntries(
+      state.sampleMutes.map((v, i) => [i, v]).filter(([, v]) => v !== false)
+    ),
+    solos: Object.fromEntries(
+      state.sampleSolos.map((v, i) => [i, v]).filter(([, v]) => v !== false)
+    ),
   };
   const json = JSON.stringify(data, null, 2);
   const blob = new Blob([json], { type: "application/json" });
@@ -464,12 +472,39 @@ async function loadPattern(file) {
   state.swing = data.swing;
   state.numSamples = data.samples.length;
   state.sampleNames = data.samples.slice();
-  state.grid = data.grid.map((row) => row.slice());
+  // Restore grid: v2 uses sparse [row, col] pairs, v1 uses 2D boolean array
+  state.grid = Array.from({ length: state.numSamples }, () =>
+    new Array(state.numBeats).fill(false)
+  );
+  if (data.grid.length > 0 && Array.isArray(data.grid[0])) {
+    // v1 format: 2D boolean array — or v2 sparse pairs
+    if (typeof data.grid[0][0] === "boolean") {
+      for (let r = 0; r < data.grid.length; r++) {
+        for (let c = 0; c < data.grid[r].length; c++) {
+          state.grid[r][c] = data.grid[r][c];
+        }
+      }
+    } else {
+      // v2 sparse: array of [row, col] pairs
+      for (const [r, c] of data.grid) {
+        state.grid[r][c] = true;
+      }
+    }
+  }
 
-  // Restore mixer state (v2) or defaults (v1)
-  state.sampleVolumes = data.volumes ? data.volumes.slice() : new Array(state.numSamples).fill(0.8);
-  state.sampleMutes = data.mutes ? data.mutes.slice() : new Array(state.numSamples).fill(false);
-  state.sampleSolos = data.solos ? data.solos.slice() : new Array(state.numSamples).fill(false);
+  // Restore mixer state (v2 sparse objects) or defaults (v1)
+  state.sampleVolumes = new Array(state.numSamples).fill(0.8);
+  state.sampleMutes = new Array(state.numSamples).fill(false);
+  state.sampleSolos = new Array(state.numSamples).fill(false);
+  if (data.volumes) {
+    for (const [i, v] of Object.entries(data.volumes)) state.sampleVolumes[i] = v;
+  }
+  if (data.mutes) {
+    for (const [i, v] of Object.entries(data.mutes)) state.sampleMutes[i] = v;
+  }
+  if (data.solos) {
+    for (const [i, v] of Object.entries(data.solos)) state.sampleSolos[i] = v;
+  }
 
   // Disconnect and reset all GainNodes
   for (let i = 0; i < rowGainNodes.length; i++) {
