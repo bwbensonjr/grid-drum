@@ -39,6 +39,19 @@ const rowGainNodes = []; // GainNode per row (not serializable, so outside state
 
 // ---- Audio Engine ---------------------------------------------------------
 
+// Unlock iOS audio: playing an <audio> element on a user gesture forces iOS
+// into a media playback session that outputs through the speaker even when
+// the silent mode switch is engaged.
+let iosAudioUnlocked = false;
+
+function unlockIOSAudio() {
+  if (iosAudioUnlocked) return;
+  iosAudioUnlocked = true;
+  const silentDataUri = "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYoRBqpAAAAAAD/+1AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGF2YzU4LjEzAAAAAAAAAAAAAAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYoRBqpAAAAAAA=";
+  const audio = new Audio(silentDataUri);
+  audio.play().catch(() => {});
+}
+
 function ensureAudioContext() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -49,6 +62,7 @@ function ensureAudioContext() {
   if (audioCtx.state === "suspended") {
     audioCtx.resume();
   }
+  unlockIOSAudio();
 }
 
 async function loadSample(url) {
