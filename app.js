@@ -358,14 +358,14 @@ function updateBeatHighlight() {
 
 function getIntervalMs(beatIndex) {
   const baseBeatMs = (60 / state.bpm / 4) * 1000; // sixteenth-note duration
-  // Swing offsets even-indexed beats (0-indexed, so indices 1, 3, 5, … are the "off" beats)
-  if (beatIndex % 2 === 1 && state.swing > 0) {
-    return baseBeatMs * (1 + state.swing);
+  // Swing: interpolate from 50/50 (straight) to 2:1 triplet split per beat pair
+  const swingAmount = 0.5 + state.swing * (2 / 3 - 0.5);
+  const pairDuration = baseBeatMs * 2;
+  if (beatIndex % 2 === 0) {
+    return pairDuration * swingAmount;
+  } else {
+    return pairDuration * (1 - swingAmount);
   }
-  if (beatIndex % 2 === 0 && state.swing > 0) {
-    return baseBeatMs * (1 - state.swing);
-  }
-  return baseBeatMs;
 }
 
 function stepBeat() {
