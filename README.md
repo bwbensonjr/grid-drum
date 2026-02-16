@@ -6,7 +6,7 @@ A grid-based drum machine.
 
 Currently on the web at [https://bwbensonjr.github.io/grid-drum](https://bwbensonjr.github.io/grid-drum).
 
-## Directions
+## Features
 
 * Set number of beats/subdivisions (columns)
 * Use "+" or "-" to add or delete samples
