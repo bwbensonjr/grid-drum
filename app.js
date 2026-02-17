@@ -432,8 +432,15 @@ const inputPatternName = document.getElementById("input-pattern-name");
 const inputBeats = document.getElementById("input-beats");
 const inputBpm = document.getElementById("input-bpm");
 
+function updatePageTitle() {
+  document.title = state.patternName
+    ? `GridDrum - ${state.patternName}`
+    : "GridDrum";
+}
+
 inputPatternName.addEventListener("change", () => {
   state.patternName = inputPatternName.value;
+  updatePageTitle();
   scheduleHashUpdate();
 });
 
@@ -570,6 +577,7 @@ async function applyPatternData(data) {
   inputBpm.value = state.bpm;
   swingSlider.value = state.swing;
   swingValue.textContent = state.swing.toFixed(2);
+  updatePageTitle();
 
   renderGrid();
   scheduleHashUpdate();
@@ -686,6 +694,7 @@ async function resetToDefaults() {
   inputBpm.value = state.bpm;
   swingSlider.value = state.swing;
   swingValue.textContent = state.swing.toFixed(2);
+  updatePageTitle();
 
   renderGrid();
   scheduleHashUpdate();
