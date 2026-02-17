@@ -1,8 +1,8 @@
 {
   "version": 2,
   "numBeats": 16,
-  "bpm": 114,
-  "swing": 1,
+  "bpm": 90,
+  "swing": 0,
   "samples": [
     "hihat",
     "snare",
@@ -23,7 +23,7 @@
     ],
     [
       0,
-      6
+      7
     ],
     [
       0,
@@ -51,7 +51,7 @@
     ],
     [
       1,
-      7
+      6
     ],
     [
       1,
@@ -75,9 +75,9 @@
     ]
   ],
   "volumes": {
-    "0": 0.64
+    "0": 0.45
   },
   "mutes": {},
   "solos": {},
-  "name": "Talk Down"
+  "name": "IDK"
 }
