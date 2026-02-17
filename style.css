@@ -70,13 +70,14 @@ main {
 }
 
 .row-label input[type="text"] {
-  width: 54px;
+  width: 90px;
   background: #16213e;
   border: 1px solid #0f3460;
   color: #e0e0e0;
   padding: 4px 6px;
   border-radius: 3px;
   font-size: 0.8rem;
+  font-weight: bold;
 }
 
 .row-label button {
@@ -244,6 +245,16 @@ main {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+#preset-select {
+  font-size: 0.85rem;
+  padding: 6px 8px;
+  border: 1px solid #0f3460;
+  border-radius: 4px;
+  background: #1a1a2e;
+  color: #e0e0e0;
+  cursor: pointer;
 }
 
 #file-controls button {

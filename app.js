@@ -15,6 +15,14 @@ const DEFAULT_SAMPLES = [
   { name: "hh-pedal", url: "samples/hh-pedal.wav" },
 ];
 
+const BUILTIN_PATTERNS = [
+  { name: "Songo", file: "patterns/songo-pattern.json" },
+  { name: "Samba", file: "patterns/samba-pattern.json" },
+  { name: "Partido Alto", file: "patterns/partido-alto-pattern.json" },
+  { name: "Talk Down", file: "patterns/talk-down-pattern.json" },
+  { name: "IDK", file: "patterns/idk-pattern.json" },
+];
+
 // ---- State ----------------------------------------------------------------
 
 const state = {
@@ -654,6 +662,29 @@ fileLoadInput.addEventListener("change", () => {
   if (fileLoadInput.files.length > 0) {
     loadPattern(fileLoadInput.files[0]);
   }
+});
+
+// ---- Preset Patterns ------------------------------------------------------
+
+const presetSelect = document.getElementById("preset-select");
+BUILTIN_PATTERNS.forEach((p) => {
+  const opt = document.createElement("option");
+  opt.value = p.file;
+  opt.textContent = p.name;
+  presetSelect.appendChild(opt);
+});
+
+presetSelect.addEventListener("change", async () => {
+  const file = presetSelect.value;
+  if (!file) return;
+  try {
+    const resp = await fetch(file);
+    const data = await resp.json();
+    await applyPatternData(data);
+  } catch (err) {
+    console.error("Failed to load preset pattern:", err);
+  }
+  presetSelect.value = "";
 });
 
 // ---- Reset to Defaults ----------------------------------------------------
