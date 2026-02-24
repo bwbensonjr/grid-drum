@@ -19,6 +19,9 @@ const DEFAULT_SAMPLES = [
 const BUILTIN_PATTERNS = [
   { name: "Songo", file: "patterns/songo-pattern.json" },
   { name: "Samba", file: "patterns/samba-pattern.json" },
+  { name: "Samba accents", file: "patterns/samba-accents-pattern.json" },
+  { name: "Samba go-go", file: "patterns/samba-go-go-pattern.json" },
+  { name: "Mambo", file: "patterns/mambo-pattern.json" },
   { name: "Partido Alto", file: "patterns/partido-alto-pattern.json" },
   { name: "Talk Down", file: "patterns/talk-down-pattern.json" },
   { name: "IDK", file: "patterns/idk-pattern.json" },
