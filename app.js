@@ -5,6 +5,7 @@
 
 const DEFAULT_SAMPLES = [
   { name: "crash", url: "samples/crash.wav" },
+  { name: "ride-bell", url: "samples/ride-bell.wav" },
   { name: "ride", url: "samples/ride.wav" },
   { name: "hihat", url: "samples/hihat.wav" },
   { name: "tom-1", url: "samples/tom-1.wav" },
