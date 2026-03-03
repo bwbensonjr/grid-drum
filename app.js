@@ -25,6 +25,10 @@ const BUILTIN_PATTERNS = [
   { name: "Partido Alto", file: "patterns/partido-alto-pattern.json" },
   { name: "Talk Down", file: "patterns/talk-down-pattern.json" },
   { name: "IDK", file: "patterns/idk-pattern.json" },
+  { name: "Bembe 1", file: "patterns/bembe-1-pattern.json" },
+  { name: "Bembe 2", file: "patterns/bembe-2-pattern.json" },
+  { name: "Bembe 3", file: "patterns/bembe-3-pattern.json" },
+  { name: "Bembe 4", file: "patterns/bembe-4-pattern.json" },
 ];
 
 // ---- State ----------------------------------------------------------------
