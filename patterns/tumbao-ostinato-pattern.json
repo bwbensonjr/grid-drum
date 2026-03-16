@@ -1,0 +1,53 @@
+{
+  "version": 2,
+  "numBeats": 16,
+  "bpm": 60,
+  "swing": 0,
+  "samples": [
+    "ride",
+    "tom-1",
+    "x-stick",
+    "kick",
+    "hh-pedal"
+  ],
+  "grid": [
+    [
+      3,
+      3
+    ],
+    [
+      3,
+      6
+    ],
+    [
+      3,
+      11
+    ],
+    [
+      3,
+      14
+    ],
+    [
+      4,
+      0
+    ],
+    [
+      4,
+      4
+    ],
+    [
+      4,
+      8
+    ],
+    [
+      4,
+      12
+    ]
+  ],
+  "volumes": {
+    "0": 0.44
+  },
+  "mutes": {},
+  "solos": {},
+  "name": "Tumbao Ostinato"
+}

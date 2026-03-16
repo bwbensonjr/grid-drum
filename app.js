@@ -29,6 +29,8 @@ const BUILTIN_PATTERNS = [
   { name: "Bembe 2", file: "patterns/bembe-2-pattern.json" },
   { name: "Bembe 3", file: "patterns/bembe-3-pattern.json" },
   { name: "Bembe 4", file: "patterns/bembe-4-pattern.json" },
+  { name: "Baiao", file: "patterns/baiao-ostinato-pattern.json" },
+  { name: "Tumbao", file: "patterns/tumbao-ostinato-pattern.json" },
 ];
 
 // ---- State ----------------------------------------------------------------
