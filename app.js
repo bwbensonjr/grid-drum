@@ -31,6 +31,8 @@ const BUILTIN_PATTERNS = [
   { name: "Bembe 4", file: "patterns/bembe-4-pattern.json" },
   { name: "Baiao", file: "patterns/baiao-ostinato-pattern.json" },
   { name: "Tumbao", file: "patterns/tumbao-ostinato-pattern.json" },
+  { name: "Baiao Samba", file: "patterns/baiao-samba-pattern.json" },
+  { name: "Tumbao Samba", file: "patterns/tumbao-samba-pattern.json" },
 ];
 
 // ---- State ----------------------------------------------------------------
