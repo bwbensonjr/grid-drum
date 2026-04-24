@@ -11,6 +11,7 @@ const DEFAULT_SAMPLES = [
   { name: "tom-1", url: "samples/tom-1.wav" },
   { name: "tom-3", url: "samples/tom-3.wav" },
   { name: "x-stick", url: "samples/x-stick.wav" },
+  { name: "snare-ghost", url: "samples/snare-ghost.wav" },
   { name: "snare", url: "samples/snare.wav" },
   { name: "kick", url: "samples/kick.wav" },
   { name: "hh-pedal", url: "samples/hh-pedal.wav" },
